@@ -2,6 +2,7 @@ import React from 'react';
 import Issues from './Issues';
 
 const Repository = ({ repository }) => {
+  // console.log('repository: ', repository);
   return (
     <div>
       <p>
