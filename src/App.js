@@ -11,11 +11,46 @@ const axiosGitHubGraphQL = axios.create({
   }
 });
 
-const GET_ORGANIZATION = `
+// const GET_ORGANIZATION = `
+//   {
+//     organization(login: "facebook") {
+//       name
+//       url
+//     }
+//   }
+// `;
+
+// const GET_REPOSITORY_OF_ORGANIZATION = `
+//   {
+//     organization(login: "facebook") {
+//       name
+//       url
+//       repository(name: "react") {
+//         name
+//         url
+//       }
+//     }
+//   }
+// `;
+
+const GET_ISSUES_OF_REPOSITORY = `
   {
     organization(login: "facebook") {
       name
       url
+      repository(name: "react") {
+        name
+        url
+        issues(last: 5) {
+          edges {
+            node {
+              id
+              title
+              url
+            }
+          }
+        }
+      }
     }
   }
 `;
@@ -43,13 +78,15 @@ class App extends Component {
   };
 
   onFetchFromGitHub = () => {
-    axiosGitHubGraphQL.post('', { query: GET_ORGANIZATION }).then(result => {
-      // console.log(result);
-      this.setState(() => ({
-        organization: result.data.data.organization,
-        errors: result.data.errors
-      }));
-    });
+    axiosGitHubGraphQL
+      .post('', { query: GET_ISSUES_OF_REPOSITORY })
+      .then(result => {
+        // console.log(result);
+        this.setState(() => ({
+          organization: result.data.data.organization,
+          errors: result.data.errors
+        }));
+      });
   };
 
   render() {
