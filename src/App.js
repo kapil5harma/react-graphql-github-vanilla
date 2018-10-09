@@ -33,12 +33,16 @@ const axiosGitHubGraphQL = axios.create({
 //   }
 // `;
 
-const GET_ISSUES_OF_REPOSITORY = `
+const getIssuesOfRepositoryQuery = (organization, repository) => {
+  // console.log('organization: ', organization);
+  // console.log('repository: ', repository);
+
+  return `
   {
-    organization(login: "facebook") {
+    organization(login: "${organization}") {
       name
       url
-      repository(name: "react") {
+      repository(name: "${repository}") {
         name
         url
         issues(last: 5) {
@@ -54,6 +58,22 @@ const GET_ISSUES_OF_REPOSITORY = `
     }
   }
 `;
+};
+
+const getIssuesOfRepository = path => {
+  const [organization, repository] = path.split('/');
+  // console.log('organization: ', organization);
+  // console.log('repository: ', repository);
+
+  return axiosGitHubGraphQL.post('', {
+    query: getIssuesOfRepositoryQuery(organization, repository)
+  });
+};
+
+const resolveIssuesQuery = queryResult => () => ({
+  organization: queryResult.data.data.organization,
+  errors: queryResult.data.errors
+});
 
 class App extends Component {
   state = {
@@ -63,8 +83,7 @@ class App extends Component {
   };
 
   componentDidMount() {
-    // fetch data
-    this.onFetchFromGitHub();
+    this.onFetchFromGitHub(this.state.path);
   }
 
   onChange = event => {
@@ -72,21 +91,14 @@ class App extends Component {
   };
 
   onSubmit = event => {
-    // fetch data
-
+    this.onFetchFromGitHub(this.state.path);
     event.preventDefault();
   };
 
-  onFetchFromGitHub = () => {
-    axiosGitHubGraphQL
-      .post('', { query: GET_ISSUES_OF_REPOSITORY })
-      .then(result => {
-        // console.log(result);
-        this.setState(() => ({
-          organization: result.data.data.organization,
-          errors: result.data.errors
-        }));
-      });
+  onFetchFromGitHub = path => {
+    getIssuesOfRepository(path).then(queryResult =>
+      this.setState(resolveIssuesQuery(queryResult))
+    );
   };
 
   render() {
