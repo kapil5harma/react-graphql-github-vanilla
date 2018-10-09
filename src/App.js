@@ -140,10 +140,57 @@ const addStarToRepository = repositoryId => {
 };
 
 const resolveAddStarMutation = mutationResult => state => {
+  // console.log('mutationResult: ', mutationResult);
+  // console.log('state: ', state);
   const { viewerHasStarred } = mutationResult.data.data.addStar.starrable;
   let { totalCount } = state.organization.repository.stargazers;
 
-  totalCount = totalCount + 1;
+  // console.log('viewerHasStarred: ', viewerHasStarred);
+  if (viewerHasStarred === true) {
+    totalCount = totalCount + 1;
+  }
+
+  return {
+    ...state,
+    organization: {
+      ...state.organization,
+      repository: {
+        ...state.organization.repository,
+        viewerHasStarred,
+        stargazers: {
+          totalCount: totalCount
+        }
+      }
+    }
+  };
+};
+
+const REMOVE_STAR = `
+  mutation ($repositoryId: ID!) {
+    removeStar(input:{starrableId:$repositoryId}) {
+      starrable {
+        viewerHasStarred
+      }
+    }
+  }
+`;
+
+const removeStarToRepository = repositoryId => {
+  return axiosGitHubGraphQL.post('', {
+    query: REMOVE_STAR,
+    variables: { repositoryId }
+  });
+};
+
+const resolveRemoveStarMutation = mutationResult => state => {
+  const { viewerHasStarred } = mutationResult.data.data.removeStar.starrable;
+  let { totalCount } = state.organization.repository.stargazers;
+
+  // console.log('viewerHasStarred: ', viewerHasStarred);
+  if (viewerHasStarred === false) {
+    totalCount = totalCount - 1;
+  }
+
   return {
     ...state,
     organization: {
@@ -192,9 +239,16 @@ class App extends Component {
   };
 
   onStarRepository = (repositoryId, viewerHasStarred) => {
-    addStarToRepository(repositoryId).then(mutationResult =>
-      this.setState(resolveAddStarMutation(mutationResult))
-    );
+    // console.log('viewerHasStarred: ', viewerHasStarred);
+    if (viewerHasStarred === false) {
+      addStarToRepository(repositoryId).then(mutationResult =>
+        this.setState(resolveAddStarMutation(mutationResult))
+      );
+    } else if (viewerHasStarred === true) {
+      removeStarToRepository(repositoryId).then(mutationResult =>
+        this.setState(resolveRemoveStarMutation(mutationResult))
+      );
+    }
   };
 
   render() {
