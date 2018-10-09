@@ -1,7 +1,7 @@
 import React from 'react';
 import Issues from './Issues';
 
-const Repository = ({ repository }) => {
+const Repository = ({ repository, onFetchMoreIssues }) => {
   // console.log('repository: ', repository);
   return (
     <div>
@@ -11,6 +11,10 @@ const Repository = ({ repository }) => {
       </p>
 
       <Issues issues={repository.issues} />
+      <hr />
+      {repository.issues.pageInfo.hasNextPage && (
+        <button onClick={onFetchMoreIssues}>More</button>
+      )}
     </div>
   );
 };
