@@ -2,6 +2,8 @@ import React from 'react';
 import gql from 'graphql-tag';
 import { Query, Mutation } from 'react-apollo';
 
+import { connect } from 'react-redux';
+
 import './App.css';
 
 const GET_REPOSITORIES_OF_ORGANIZATION = gql`
@@ -39,44 +41,38 @@ const App = () => (
         return <div>Loading ...</div>;
       }
 
-      return (
-        <Repositories repositories={organization.repositories} />
-      );
+      return <Repositories repositories={organization.repositories} />;
     }}
   </Query>
 );
 
-class Repositories extends React.Component {
-  state = {
-    selectedRepositoryIds: [],
-  };
+// class Repositories extends React.Component {
+//   state = {
+//     selectedRepositoryIds: []
+//   };
 
-  toggleSelectRepository = (id, isSelected) => {
-    let { selectedRepositoryIds } = this.state;
+//   toggleSelectRepository = (id, isSelected) => {
+//     let { selectedRepositoryIds } = this.state;
 
-    selectedRepositoryIds = isSelected
-      ? selectedRepositoryIds.filter(itemId => itemId !== id)
-      : selectedRepositoryIds.concat(id);
+//     selectedRepositoryIds = isSelected
+//       ? selectedRepositoryIds.filter(itemId => itemId !== id)
+//       : selectedRepositoryIds.concat(id);
 
-    this.setState({ selectedRepositoryIds });
-  };
+//     this.setState({ selectedRepositoryIds });
+//   };
 
-  render() {
-    return (
-      <RepositoryList
-        repositories={this.props.repositories}
-        selectedRepositoryIds={this.state.selectedRepositoryIds}
-        toggleSelectRepository={this.toggleSelectRepository}
-      />
-    );
-  }
-}
+//   render() {
+//     return (
+//       <RepositoryList
+//         repositories={this.props.repositories}
+//         selectedRepositoryIds={this.state.selectedRepositoryIds}
+//         toggleSelectRepository={this.toggleSelectRepository}
+//       />
+//     );
+//   }
+// }
 
-const RepositoryList = ({
-  repositories,
-  selectedRepositoryIds,
-  toggleSelectRepository,
-}) => (
+const RepositoryList = ({ repositories, selectedRepositoryIds }) => (
   <ul>
     {repositories.edges.map(({ node }) => {
       const isSelected = selectedRepositoryIds.includes(node.id);
@@ -89,11 +85,7 @@ const RepositoryList = ({
 
       return (
         <li className={rowClassName.join(' ')} key={node.id}>
-          <Select
-            id={node.id}
-            isSelected={isSelected}
-            toggleSelectRepository={toggleSelectRepository}
-          />{' '}
+          <SelectContainer id={node.id} isSelected={isSelected} />{' '}
           <a href={node.url}>{node.name}</a>{' '}
           {!node.viewerHasStarred && <Star id={node.id} />}
         </li>
@@ -101,6 +93,10 @@ const RepositoryList = ({
     })}
   </ul>
 );
+const mapStateToProps = state => ({
+  selectedRepositoryIds: state.selectedRepositoryIds
+});
+const Repositories = connect(mapStateToProps)(RepositoryList);
 
 const Star = ({ id }) => (
   <Mutation mutation={STAR_REPOSITORY} variables={{ id }}>
@@ -113,12 +109,21 @@ const Star = ({ id }) => (
 );
 
 const Select = ({ id, isSelected, toggleSelectRepository }) => (
-  <button
-    type="button"
-    onClick={() => toggleSelectRepository(id, isSelected)}
-  >
+  <button type="button" onClick={() => toggleSelectRepository(id, isSelected)}>
     {isSelected ? 'Unselect' : 'Select'}
   </button>
 );
+const mapDispatchToProps = (dispatch, { id, isSelected }) => ({
+  toggleSelectRepository: () =>
+    dispatch({
+      type: 'TOGGLE_SELECT_REPOSITORY',
+      id,
+      isSelected
+    })
+});
+const SelectContainer = connect(
+  null,
+  mapDispatchToProps
+)(Select);
 
 export default App;
